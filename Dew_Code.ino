@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include "Adafruit_MQTT_Client.h"
 #include <WiFiManager.h>
+#include <Preferences.h>
 #include "config.h"
 #include "bitmaps.h"
 
@@ -15,6 +16,7 @@ const unsigned long MIN_MQTT_INTERVAL = 3UL * 60UL * 1000UL;
 Adafruit_SH1106G display(128, 64, &Wire, -1);
 DHT dht(33, DHT22);
 WiFiClient wifiClient;
+Preferences prefs;
 Adafruit_MQTT_Client mqtt(&wifiClient, AIO_SERVER, AIO_PORT, IO_USERNAME, IO_KEY);
 Adafruit_MQTT_Publish feedTemp = Adafruit_MQTT_Publish(&mqtt, IO_USERNAME "/feeds/temperature");
 Adafruit_MQTT_Publish feedHum = Adafruit_MQTT_Publish(&mqtt, IO_USERNAME "/feeds/humidity");
@@ -261,10 +263,13 @@ void setup() {
   display.begin(0x3C, true);
   display.clearDisplay();
   display.display();
+  prefs.begin("dew", false);
+  bool introPlayed = prefs.getBool("intro", false);
   if (!introPlayed) {
-  play_intro();
-  introPlayed = true;
+    play_intro();
+    prefs.putBool("intro", true);
   }
+  prefs.end();
   last_disp_on = millis();
   last_update = millis() - INTERVAL_MQTT_PUBLISH + 2500;
   update_display(); 
